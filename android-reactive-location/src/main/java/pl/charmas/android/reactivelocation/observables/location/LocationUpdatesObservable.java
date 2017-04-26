@@ -4,6 +4,7 @@ import android.content.Context;
 import android.location.Location;
 
 import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
 
@@ -38,10 +39,10 @@ public class LocationUpdatesObservable extends BaseLocationObservable<Location> 
         if (locationClient.isConnected()) {
             LocationServices.FusedLocationApi.removeLocationUpdates(locationClient, listener);
         }
-        listener.unSubscribe();
+        listener.unsubscribe();
     }
 
-    static class UnsubscribableLocationListener implements com.google.android.gms.location.LocationListener {
+    static class UnsubscribableLocationListener implements LocationListener {
         private Observer<? super Location> observer;
 
         public UnsubscribableLocationListener(Observer<? super Location> observer) {
@@ -55,7 +56,7 @@ public class LocationUpdatesObservable extends BaseLocationObservable<Location> 
             }
         }
 
-        void unSubscribe() {
+        void unsubscribe() {
             this.observer = null;
         }
     }
