@@ -21,7 +21,7 @@ public class LocationUpdatesObservable extends BaseLocationObservable<Location> 
     }
 
     private final LocationRequest locationRequest;
-    private LocationListener listener;
+    private UnsubscribableLocationListener listener;
 
     private LocationUpdatesObservable(Context ctx, LocationRequest locationRequest) {
         super(ctx);
@@ -30,12 +30,7 @@ public class LocationUpdatesObservable extends BaseLocationObservable<Location> 
 
     @Override
     protected void onGoogleApiClientReady(GoogleApiClient apiClient, final Observer<? super Location> observer) {
-        listener = new LocationListener() {
-            @Override
-            public void onLocationChanged(Location location) {
-                observer.onNext(location);
-            }
-        };
+        listener = new UnsubscribableLocationListener(observer);
         LocationServices.FusedLocationApi.requestLocationUpdates(apiClient, locationRequest, listener);
     }
 
@@ -44,6 +39,25 @@ public class LocationUpdatesObservable extends BaseLocationObservable<Location> 
         if (locationClient.isConnected()) {
             LocationServices.FusedLocationApi.removeLocationUpdates(locationClient, listener);
         }
+        listener.unsubscribe();
     }
 
+    static class UnsubscribableLocationListener implements LocationListener {
+        private Observer<? super Location> observer;
+
+        public UnsubscribableLocationListener(Observer<? super Location> observer) {
+            this.observer = observer;
+        }
+
+        @Override
+        public void onLocationChanged(Location location) {
+            if (observer != null) {
+                observer.onNext(location);
+            }
+        }
+
+        void unsubscribe() {
+            this.observer = null;
+        }
+    }
 }
