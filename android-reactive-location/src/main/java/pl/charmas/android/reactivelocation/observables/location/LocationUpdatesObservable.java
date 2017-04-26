@@ -58,7 +58,5 @@ public class LocationUpdatesObservable extends BaseLocationObservable<Location> 
         void unSubscribe() {
             this.observer = null;
         }
-
-
     }
 }
