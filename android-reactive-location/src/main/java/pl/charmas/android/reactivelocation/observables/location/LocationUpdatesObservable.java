@@ -20,7 +20,7 @@ public class LocationUpdatesObservable extends BaseLocationObservable<Location> 
     }
 
     private final LocationRequest locationRequest;
-    private UnSubcribeableLocationListener listener;
+    private UnsubscribableLocationListener listener;
 
     private LocationUpdatesObservable(Context ctx, LocationRequest locationRequest) {
         super(ctx);
@@ -29,7 +29,7 @@ public class LocationUpdatesObservable extends BaseLocationObservable<Location> 
 
     @Override
     protected void onGoogleApiClientReady(GoogleApiClient apiClient, final Observer<? super Location> observer) {
-        listener = new UnSubcribeableLocationListener(observer);
+        listener = new UnsubscribableLocationListener(observer);
         LocationServices.FusedLocationApi.requestLocationUpdates(apiClient, locationRequest, listener);
     }
 
@@ -41,10 +41,10 @@ public class LocationUpdatesObservable extends BaseLocationObservable<Location> 
         listener.unSubscribe();
     }
 
-    static class UnSubcribeableLocationListener implements com.google.android.gms.location.LocationListener {
+    static class UnsubscribableLocationListener implements com.google.android.gms.location.LocationListener {
         private Observer<? super Location> observer;
 
-        public UnSubcribeableLocationListener(Observer<? super Location> observer) {
+        public UnsubscribableLocationListener(Observer<? super Location> observer) {
             this.observer = observer;
         }
 
