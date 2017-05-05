@@ -2,6 +2,7 @@ package pl.charmas.android.reactivelocation.observables.location;
 
 import android.content.Context;
 import android.location.Location;
+import android.support.annotation.Nullable;
 
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationListener;
@@ -21,7 +22,7 @@ public class LocationUpdatesObservable extends BaseLocationObservable<Location> 
     }
 
     private final LocationRequest locationRequest;
-    private UnsubscribableLocationListener listener;
+    @Nullable private UnsubscribableLocationListener listener;
 
     private LocationUpdatesObservable(Context ctx, LocationRequest locationRequest) {
         super(ctx);
@@ -38,8 +39,10 @@ public class LocationUpdatesObservable extends BaseLocationObservable<Location> 
     protected void onUnsubscribed(GoogleApiClient locationClient) {
         if (locationClient.isConnected()) {
             LocationServices.FusedLocationApi.removeLocationUpdates(locationClient, listener);
+            if (listener != null) {
+              listener.unsubscribe();
+            }
         }
-        listener.unsubscribe();
     }
 
     static class UnsubscribableLocationListener implements LocationListener {
