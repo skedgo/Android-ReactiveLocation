@@ -4,7 +4,6 @@ import android.app.PendingIntent;
 import android.content.Context;
 import android.location.Address;
 import android.location.Location;
-import android.support.annotation.Nullable;
 import android.support.annotation.RequiresPermission;
 
 import com.google.android.gms.common.api.Api;
@@ -18,15 +17,6 @@ import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.LocationSettingsRequest;
 import com.google.android.gms.location.LocationSettingsResult;
-import com.google.android.gms.location.places.AutocompleteFilter;
-import com.google.android.gms.location.places.AutocompletePredictionBuffer;
-import com.google.android.gms.location.places.PlaceBuffer;
-import com.google.android.gms.location.places.PlaceFilter;
-import com.google.android.gms.location.places.PlaceLikelihoodBuffer;
-import com.google.android.gms.location.places.PlacePhotoMetadata;
-import com.google.android.gms.location.places.PlacePhotoMetadataResult;
-import com.google.android.gms.location.places.PlacePhotoResult;
-import com.google.android.gms.location.places.Places;
 import com.google.android.gms.maps.model.LatLngBounds;
 
 import java.util.List;
@@ -42,7 +32,6 @@ import pl.charmas.android.reactivelocation.observables.geofence.RemoveGeofenceOb
 import pl.charmas.android.reactivelocation.observables.location.AddLocationIntentUpdatesObservable;
 import pl.charmas.android.reactivelocation.observables.location.LastKnownLocationObservable;
 import pl.charmas.android.reactivelocation.observables.location.LocationUpdatesObservable;
-import pl.charmas.android.reactivelocation.observables.location.MockLocationObservable;
 import pl.charmas.android.reactivelocation.observables.location.RemoveLocationIntentUpdatesObservable;
 import rx.Observable;
 import rx.functions.Func1;
@@ -95,31 +84,6 @@ public class ReactiveLocationProvider {
     )
     public Observable<Location> getUpdatedLocation(LocationRequest locationRequest) {
         return LocationUpdatesObservable.createObservable(ctx, locationRequest);
-    }
-
-    /**
-     * Returns an observable which activates mock location mode when subscribed to, using the
-     * supplied observable as a source of mock locations. Mock locations will replace normal
-     * location information for all users of the FusedLocationProvider API on the device while this
-     * observable is subscribed to.
-     * <p/>
-     * To use this method, mock locations must be enabled in developer options and your application
-     * must hold the android.permission.ACCESS_MOCK_LOCATION permission, or a {@link java.lang.SecurityException}
-     * will be thrown.
-     * <p/>
-     * All statuses that are not successful will be reported as {@link pl.charmas.android.reactivelocation.observables.StatusException}.
-     * <p/>
-     * Every exception is delivered by {@link rx.Observer#onError(Throwable)}.
-     *
-     * @param sourceLocationObservable observable that emits {@link android.location.Location} instances suitable to use as mock locations
-     * @return observable that emits {@link com.google.android.gms.common.api.Status}
-     */
-    @RequiresPermission(
-            allOf = {"android.permission.ACCESS_COARSE_LOCATION",
-                    "android.permission.ACCESS_MOCK_LOCATION"}
-    )
-    public Observable<Status> mockLocation(Observable<Location> sourceLocationObservable) {
-        return MockLocationObservable.createObservable(ctx, sourceLocationObservable);
     }
 
     /**
@@ -292,93 +256,6 @@ public class ReactiveLocationProvider {
                     @Override
                     public Observable<LocationSettingsResult> call(GoogleApiClient googleApiClient) {
                         return fromPendingResult(LocationServices.SettingsApi.checkLocationSettings(googleApiClient, locationRequest));
-                    }
-                });
-    }
-
-    /**
-     * Returns observable that fetches current place from Places API. To flatmap and auto release
-     * buffer to {@link com.google.android.gms.location.places.PlaceLikelihood} observable use
-     * {@link DataBufferObservable}.
-     *
-     * @param placeFilter filter
-     * @return observable that emits current places buffer and completes
-     */
-    public Observable<PlaceLikelihoodBuffer> getCurrentPlace(@Nullable final PlaceFilter placeFilter) {
-        return getGoogleApiClientObservable(Places.PLACE_DETECTION_API, Places.GEO_DATA_API)
-                .flatMap(new Func1<GoogleApiClient, Observable<PlaceLikelihoodBuffer>>() {
-                    @Override
-                    public Observable<PlaceLikelihoodBuffer> call(GoogleApiClient api) {
-                        return fromPendingResult(Places.PlaceDetectionApi.getCurrentPlace(api, placeFilter));
-                    }
-                });
-    }
-
-    /**
-     * Returns observable that fetches a place from the Places API using the place ID.
-     *
-     * @param placeId id for place
-     * @return observable that emits places buffer and completes
-     */
-    public Observable<PlaceBuffer> getPlaceById(@Nullable final String placeId) {
-        return getGoogleApiClientObservable(Places.PLACE_DETECTION_API, Places.GEO_DATA_API)
-                .flatMap(new Func1<GoogleApiClient, Observable<PlaceBuffer>>() {
-                    @Override
-                    public Observable<PlaceBuffer> call(GoogleApiClient api) {
-                        return fromPendingResult(Places.GeoDataApi.getPlaceById(api, placeId));
-                    }
-                });
-    }
-
-    /**
-     * Returns observable that fetches autocomplete predictions from Places API. To flatmap and autorelease
-     * {@link com.google.android.gms.location.places.AutocompletePredictionBuffer} you can use
-     * {@link DataBufferObservable}.
-     *
-     * @param query  search query
-     * @param bounds bounds where to fetch suggestions from
-     * @param filter filter
-     * @return observable with suggestions buffer and completes
-     */
-    public Observable<AutocompletePredictionBuffer> getPlaceAutocompletePredictions(final String query, final LatLngBounds bounds, final AutocompleteFilter filter) {
-        return getGoogleApiClientObservable(Places.PLACE_DETECTION_API, Places.GEO_DATA_API)
-                .flatMap(new Func1<GoogleApiClient, Observable<AutocompletePredictionBuffer>>() {
-                    @Override
-                    public Observable<AutocompletePredictionBuffer> call(GoogleApiClient api) {
-                        return fromPendingResult(Places.GeoDataApi.getAutocompletePredictions(api, query, bounds, filter));
-                    }
-                });
-    }
-
-    /**
-     * Returns observable that fetches photo metadata from the Places API using the place ID.
-     *
-     * @param placeId id for place
-     * @return observable that emits metadata buffer and completes
-     */
-    public Observable<PlacePhotoMetadataResult> getPhotoMetadataById(final String placeId) {
-        return getGoogleApiClientObservable(Places.PLACE_DETECTION_API, Places.GEO_DATA_API)
-                .flatMap(new Func1<GoogleApiClient, Observable<PlacePhotoMetadataResult>>() {
-                    @Override
-                    public Observable<PlacePhotoMetadataResult> call(GoogleApiClient api) {
-                        return fromPendingResult(Places.GeoDataApi.getPlacePhotos(api, placeId));
-                    }
-                });
-    }
-
-    /**
-     * Returns observable that fetches a placePhotoMetadata from the Places API using the place placePhotoMetadata metadata.
-     * Use after fetching the place placePhotoMetadata metadata with {@link ReactiveLocationProvider#getPhotoMetadataById(String)}
-     *
-     * @param placePhotoMetadata the place photo meta data
-     * @return observable that emits the photo result and completes
-     */
-    public Observable<PlacePhotoResult> getPhotoForMetadata(final PlacePhotoMetadata placePhotoMetadata) {
-        return getGoogleApiClientObservable(Places.PLACE_DETECTION_API, Places.GEO_DATA_API)
-                .flatMap(new Func1<GoogleApiClient, Observable<PlacePhotoResult>>() {
-                    @Override
-                    public Observable<PlacePhotoResult> call(GoogleApiClient api) {
-                        return fromPendingResult(placePhotoMetadata.getPhoto(api));
                     }
                 });
     }
