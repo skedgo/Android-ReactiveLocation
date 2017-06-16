@@ -37,11 +37,9 @@ public class LocationUpdatesObservable extends BaseLocationObservable<Location> 
 
     @Override
     protected void onUnsubscribed(GoogleApiClient locationClient) {
-        if (locationClient.isConnected()) {
+        if (locationClient.isConnected() && listener != null) {
             LocationServices.FusedLocationApi.removeLocationUpdates(locationClient, listener);
-            if (listener != null) {
-              listener.unsubscribe();
-            }
+            listener.unsubscribe();
         }
     }
 

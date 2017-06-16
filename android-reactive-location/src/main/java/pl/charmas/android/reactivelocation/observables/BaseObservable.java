@@ -73,31 +73,34 @@ public abstract class BaseObservable<T> implements Observable.OnSubscribe<T> {
             GoogleApiClient.ConnectionCallbacks,
             GoogleApiClient.OnConnectionFailedListener {
 
-        final private Observer<? super T> observer;
+        final private Subscriber<? super T> subscriber;
 
         private GoogleApiClient apiClient;
 
-        private ApiClientConnectionCallbacks(Observer<? super T> observer) {
-            this.observer = observer;
+        private ApiClientConnectionCallbacks(Subscriber<? super T> subscriber) {
+            this.subscriber = subscriber;
         }
 
         @Override
         public void onConnected(Bundle bundle) {
+            if (subscriber.isUnsubscribed()) {
+              return;
+            }
             try {
-                onGoogleApiClientReady(apiClient, observer);
+                onGoogleApiClientReady(apiClient, subscriber);
             } catch (Throwable ex) {
-                observer.onError(ex);
+                subscriber.onError(ex);
             }
         }
 
         @Override
         public void onConnectionSuspended(int cause) {
-            observer.onError(new GoogleAPIConnectionSuspendedException(cause));
+            subscriber.onError(new GoogleAPIConnectionSuspendedException(cause));
         }
 
         @Override
         public void onConnectionFailed(ConnectionResult connectionResult) {
-            observer.onError(new GoogleAPIConnectionException("Error connecting to GoogleApiClient.", connectionResult));
+            subscriber.onError(new GoogleAPIConnectionException("Error connecting to GoogleApiClient.", connectionResult));
         }
 
         public void setClient(GoogleApiClient client) {
