@@ -84,7 +84,7 @@ public abstract class BaseObservable<T> implements Observable.OnSubscribe<T> {
         @Override
         public void onConnected(Bundle bundle) {
             if (subscriber.isUnsubscribed()) {
-              return;
+                return;
             }
             try {
                 onGoogleApiClientReady(apiClient, subscriber);
