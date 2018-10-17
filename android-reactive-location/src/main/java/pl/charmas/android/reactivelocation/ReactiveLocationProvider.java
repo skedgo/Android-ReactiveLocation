@@ -4,7 +4,7 @@ import android.app.PendingIntent;
 import android.content.Context;
 import android.location.Address;
 import android.location.Location;
-import android.support.annotation.RequiresPermission;
+import androidx.annotation.RequiresPermission;
 
 import com.google.android.gms.common.api.Api;
 import com.google.android.gms.common.api.GoogleApiClient;
